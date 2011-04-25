@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "functions.h"
 
 using namespace std ;
 
@@ -21,8 +22,8 @@ int main(int argc, char **argv){
 	int choice;
 	char *poly1, *poly2, *tablefile ;
 	FILE *inpF, *rndFile ;
-	unsigned int maxval, maxitr, numbits ;
-	long long unsigned number ;
+	long long unsigned int maxval, maxitr, numbits ;
+	long long unsigned int number ;
 
 
 
@@ -61,7 +62,7 @@ int main(int argc, char **argv){
 						tablefile = strtok(NULL, "=") ;
 						if (tablefile == NULL)
 							usage() ;
-						maxval = atoi(tablefile) ;
+						maxval = atoll(tablefile) ;
 						if(maxval == 0){
 							fprintf(stderr, "Maxval should be greator than zero\n") ;
 							exit(0) ;
@@ -90,7 +91,7 @@ int main(int argc, char **argv){
 						poly1 = strtok(NULL, "=") ;
 						if (poly1 == NULL)
 							usage() ;
-						number = atoi(poly1) ;
+						number = atoll(poly1) ;
 						if(number == 0){
 							fprintf(stderr, "Number should be greator than zero\n");
 							exit(0) ;
@@ -130,7 +131,7 @@ int main(int argc, char **argv){
 						poly1 = strtok(NULL, "=") ;
 						if (poly1 == NULL)
 							usage() ;
-						number = atoi(poly1) ;
+						number = atoll(poly1) ;
 						if(number == 0){
 							fprintf(stderr, "Number should be greator than zero\n");
 							exit(0) ;
@@ -142,7 +143,7 @@ int main(int argc, char **argv){
 						poly1 = strtok(NULL, "=") ;
 						if (poly1 == NULL)
 							usage() ;
-						maxitr = atoi(poly1) ;
+						maxitr = atoll(poly1) ;
 						if(maxitr == 0){
 							fprintf(stderr, "Maxitr should be greator than zero\n");
 							exit(0) ;
@@ -182,7 +183,7 @@ int main(int argc, char **argv){
 						poly1 = strtok(NULL, "=") ;
 						if (poly1 == NULL)
 							usage() ;
-						numbits = atoi(poly1) ;
+						numbits = atoll(poly1) ;
 						if(numbits == 0){
 							fprintf(stderr, "Numbits should be greator than zero\n");
 							exit(0) ;
@@ -194,7 +195,7 @@ int main(int argc, char **argv){
 						poly1 = strtok(NULL, "=") ;
 						if (poly1 == NULL)
 							usage() ;
-						maxitr = atoi(poly1) ;
+						maxitr = atoll(poly1) ;
 						if(maxitr == 0){
 							fprintf(stderr, "Maxitr should be greator than zero\n");
 							exit(0) ;
@@ -246,7 +247,7 @@ int main(int argc, char **argv){
 						poly1 = strtok(NULL, "=") ;
 						if (poly1 == NULL)
 							usage() ;
-						numbits = atoi(poly1) ;
+						numbits = atoll(poly1) ;
 						if(numbits == 0){
 							fprintf(stderr, "Numbits should be greator than zero\n");
 							exit(0) ;
@@ -294,27 +295,29 @@ int main(int argc, char **argv){
 	// Command line parsing done, now call respective methods
 
 	if (choice == 1){
-		printf("Maxval: %d\n", maxval) ;
+//		printf("Maxval: %llu\n", maxval) ;
+		generatePrimes(maxval) ;
+		
 	}
 	else if (choice == 2){
-		printf("number: %lld\n", number);
+		printf("number: %llu\n", number);
 
 		fclose(inpF) ;
 
 	}
 	else if (choice == 3){
-		printf("number: %lld, maxitr: %d\n", number, maxitr) ;
+		printf("number: %llu, maxitr: %llu\n", number, maxitr) ;
 
 		fclose(inpF) ;
 	}
 	else if (choice == 4){
-		printf("numbits: %d, maxitr: %d", numbits, maxitr) ;
+		printf("numbits: %llu, maxitr: %llu", numbits, maxitr) ;
 
 		fclose(inpF) ;
 		fclose(rndFile) ;
 	}
 	else if (choice == 5){
-		printf("numbits: %d\n", numbits) ;
+		printf("numbits: %llu\n", numbits) ;
 
 		fclose(inpF) ;
 		fclose(rndFile) ;
