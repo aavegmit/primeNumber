@@ -23,7 +23,7 @@ int main(int argc, char **argv){
 	char *poly1, *poly2, *tablefile ;
 	FILE *inpF, *rndFile ;
 	long long unsigned int maxval, maxitr, numbits ;
-	long long unsigned int number ;
+	char *number ;
 
 
 
@@ -91,11 +91,7 @@ int main(int argc, char **argv){
 						poly1 = strtok(NULL, "=") ;
 						if (poly1 == NULL)
 							usage() ;
-						number = atoll(poly1) ;
-						if(number == 0){
-							fprintf(stderr, "Number should be greator than zero\n");
-							exit(0) ;
-						}
+						number = poly1 ;
 					} 
 					else if (argv[0][1] == 'p'  ) {
 						/* read pphrase from *argv */
@@ -131,11 +127,7 @@ int main(int argc, char **argv){
 						poly1 = strtok(NULL, "=") ;
 						if (poly1 == NULL)
 							usage() ;
-						number = atoll(poly1) ;
-						if(number == 0){
-							fprintf(stderr, "Number should be greator than zero\n");
-							exit(0) ;
-						}
+						number = poly1 ;
 					} 
 					else if (argv[0][1] == 't' ) {
 						/* read pphrase from *argv */
@@ -300,13 +292,13 @@ int main(int argc, char **argv){
 		
 	}
 	else if (choice == 2){
-		printf("number: %llu\n", number);
+		trialDiv(number, inpF) ;
 
 		fclose(inpF) ;
 
 	}
 	else if (choice == 3){
-		printf("number: %llu, maxitr: %llu\n", number, maxitr) ;
+		printf("number: %s, maxitr: %llu\n", number, maxitr) ;
 
 		fclose(inpF) ;
 	}
