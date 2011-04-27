@@ -124,10 +124,7 @@ int checkPrimesFile(FILE *fp){
 
 }
 
-void trialDiv(char *num, FILE *fp){
-	// Check the prime file
-	if (checkPrimesFile(fp) == -1)
-		return ;
+int trialDiv(char *num, FILE *fp){
 
 	// Create the bignum object
 	BIGNUM *bn_num = NULL ;
@@ -142,19 +139,19 @@ void trialDiv(char *num, FILE *fp){
 
 	if (bn_num == NULL){
 		fprintf(stderr, "BIGNUM new failed\n") ;
-		return ;
+		return -1;
 	}
 	if (bn_word == NULL){
 		fprintf(stderr, "BIGNUM new failed\n") ;
-		return ;
+		return -1;
 	}
 	if (bn_ctx == NULL){
 		fprintf(stderr, "BIGNUM new failed\n") ;
-		return ;
+		return -1;
 	}
 	if (bn_rem == NULL){
 		fprintf(stderr, "BIGNUM new failed\n") ;
-		return ;
+		return -1;
 	}
 
 	BN_zero(bn_num) ;
@@ -167,7 +164,7 @@ void trialDiv(char *num, FILE *fp){
 		BN_free(bn_num) ;
 		BN_free(bn_word) ;
 		BN_free(bn_rem) ;
-		return;
+		return -1;
 	}
 
 	fseek(fp, 0, SEEK_SET) ;
@@ -187,14 +184,14 @@ void trialDiv(char *num, FILE *fp){
 			BN_free(bn_num) ;
 			BN_free(bn_word) ;
 			BN_free(bn_rem) ;
-			return;
+			return -1;
 		}
 		if(!BN_cmp(bn_word, bn_num)){
 			printf("n passes trial division test\n") ;
 			BN_free(bn_num) ;
 			BN_free(bn_word) ;
 			BN_free(bn_rem) ;
-			return ;
+			return 1;
 		}	
 
 		// Find the mod
@@ -204,7 +201,7 @@ void trialDiv(char *num, FILE *fp){
 				BN_free(bn_num) ;
 				BN_free(bn_word) ;
 				BN_free(bn_rem) ;
-				return ;
+				return 0;
 			}
 		}
 
@@ -213,18 +210,231 @@ void trialDiv(char *num, FILE *fp){
 
 	if ( maxval < (unsigned int)sqrt(atoll(num))){
 		printf("n passes trial division test (not enough primes)\n") ;
+		BN_free(bn_num) ;
+		BN_free(bn_word) ;
+		BN_free(bn_rem) ;
+		return 2 ;
 	}
 	else{
 		printf("n passes trial division test\n") ;
+		BN_free(bn_num) ;
+		BN_free(bn_word) ;
+		BN_free(bn_rem) ;
+		return 1 ;
 	}
 
 
 
 
-	BN_free(bn_num) ;
-	BN_free(bn_word) ;
-	BN_free(bn_rem) ;
 
 
 
 }
+
+int millerRabin(char *num, long long unsigned maxitr, FILE *fp, int flag){
+
+	BIGNUM *bn_num = NULL ;
+	BIGNUM *bn_nminus1 = NULL ;
+	BIGNUM *bn_word = NULL ;
+	BIGNUM *bn_r = NULL ;
+	BN_CTX *bn_ctx = NULL ;
+	BIGNUM *bn_rem = NULL ;
+	BIGNUM *bn_one = NULL ;
+	BIGNUM *bn_two = NULL ;
+
+	bn_num = BN_new() ;
+	bn_nminus1 = BN_new() ;
+	bn_word = BN_new() ;
+	bn_r = BN_new() ;
+	bn_ctx = BN_CTX_new() ;
+	bn_rem = BN_new() ;
+	bn_one = BN_new() ;
+	bn_two = BN_new() ;
+
+	if (bn_num == NULL){
+		fprintf(stderr, "BIGNUM new failed\n") ;
+		return -1 ;
+	}
+	if (bn_word == NULL){
+		fprintf(stderr, "BIGNUM new failed\n") ;
+		return -1;
+	}
+	if (bn_ctx == NULL){
+		fprintf(stderr, "BIGNUM new failed\n") ;
+		return -1;
+	}
+	if (bn_rem == NULL){
+		fprintf(stderr, "BIGNUM new failed\n") ;
+		return -1;
+	}
+	if (bn_nminus1 == NULL){
+		fprintf(stderr, "BIGNUM new failed\n") ;
+		return -1;
+	}
+	if (bn_r == NULL){
+		fprintf(stderr, "BIGNUM new failed\n") ;
+		return -1;
+	}
+	if (bn_one == NULL){
+		fprintf(stderr, "BIGNUM new failed\n") ;
+		return -1;
+	}
+	if (bn_two == NULL){
+		fprintf(stderr, "BIGNUM new failed\n") ;
+		return -1;
+	}
+
+	BN_zero(bn_num) ;
+	BN_zero(bn_nminus1) ;
+	BN_zero(bn_word) ;	// used as a
+	BN_zero(bn_rem) ;	// used as y
+	BN_zero(bn_r) ;		// used as r
+	BN_CTX_init(bn_ctx) ;
+	BN_zero(bn_one) ;
+	BN_zero(bn_two) ;
+
+	if(BN_dec2bn(&bn_num,  num) == 0){
+		fprintf(stderr, "BIGNUM conversion of binary to bn\n") ;
+		BN_free(bn_num) ;
+		BN_free(bn_word) ;
+		BN_free(bn_rem) ;
+		return -1;
+	}
+
+	fseek(fp, 0, SEEK_SET) ;
+
+	uint32_t maxval, word ;
+	fread((uint32_t *)&maxval, 1, 4, fp) ;
+	maxval = htonl(maxval) ;
+
+	if(flag)
+		printf("n = %s\n", num) ;
+	// Find n-1
+	BN_set_word(bn_word, 1) ;
+	BN_set_word(bn_one, 1) ;
+	BN_set_word(bn_two, 2) ;
+
+	BN_sub(bn_nminus1, bn_num, bn_word) ; 
+	if(!flag)
+		printf("  ") ;
+	printf("  n-1 = %s\n", BN_bn2dec(bn_nminus1 )) ;
+
+	// Find 2^s * r
+	long unsigned int s=0 ;
+	unsigned char *nminus1 = (unsigned char *)malloc(BN_num_bytes(bn_nminus1))  ;
+	BN_bn2bin(bn_nminus1, nminus1) ;
+	for(long long int i = 0 ; i < BN_num_bits(bn_nminus1) ;  i++){
+		//		if(readBit(nminus1, i) == 0x00){
+		if(!BN_is_bit_set(bn_nminus1, i)){
+			++s ;
+		}
+		else
+			break ;
+	}
+	//	--s ;
+	if(!flag)
+		printf("  ") ;
+	printf("  s = %lu\n", s) ;
+	if ( s > 0){
+		BN_rshift(bn_r, bn_nminus1, s) ;
+	}
+	if(!flag)
+		printf("  ") ;
+	printf("  r = %s\n", BN_bn2dec(bn_r)) ;
+
+	for(long long unsigned i = 1 ; i <= maxitr; ++i){
+		fread((uint32_t *)&word, 1, 4, fp) ;
+		//		word = htonl(word) ;
+		BN_bin2bn((unsigned char *)&word, 4, bn_word) ;
+		if(BN_cmp(bn_word, bn_nminus1) > 1){
+			printf("Miller test failed\n") ;
+			return 0;
+		}
+		BN_mod_exp(bn_rem, bn_word, bn_r, bn_num, bn_ctx) ;
+		if(!flag)
+			printf("  ") ;
+		printf("  Itr %llu of %llu, a = %s, y = %s", i, maxitr, BN_bn2dec(bn_word), BN_bn2dec(bn_rem)) ;
+		if(!BN_cmp(bn_rem, bn_nminus1))
+			printf(" (which is n-1)") ;
+		printf("\n") ;
+
+		if(BN_cmp(bn_rem, bn_one) && BN_cmp(bn_rem, bn_nminus1)){
+			for(long unsigned int j=1 ; (j <= s-1) && BN_cmp(bn_rem, bn_nminus1) ; ++j){
+				BN_mod_exp(bn_rem, bn_rem, bn_two, bn_num, bn_ctx) ;
+				// Printf j and y
+				if(!flag)
+					printf("  ") ;
+				printf("    j = %lu of %lu, y = %s", j, s-1, BN_bn2dec(bn_rem)) ;
+				if(!BN_cmp(bn_rem, bn_nminus1))
+					printf(" (which is n-1)") ;
+				printf("\n") ;
+				if(!BN_cmp(bn_rem, bn_one)){
+					if(!flag)
+						printf("  ") ;
+					printf("Miller-Rabin found a strong witness %s\n", BN_bn2dec(bn_word)) ;
+					return 0;
+				}
+			}
+			if(BN_cmp(bn_rem, bn_nminus1)){
+				if(!flag)
+					printf("  ") ;
+				printf("Miller-Rabin found a strong witness %s\n", BN_bn2dec(bn_word)) ;
+				//		printf("Composite\n") ;
+				return 0;
+			}
+		}
+
+	}
+	if(!flag)
+		printf("  ") ;
+	printf("Miller-Rabin declares n to be a prime number\n") ;
+	return 1;
+
+	}
+
+	BIGNUM *RndOddNum(long long unsigned numbits, BIGNUM *bn_num, FILE *fp){
+		long long unsigned numbytes = ceil((double)numbits/8) ;
+		unsigned char *word = (unsigned char *)malloc(numbytes) ;
+		if (fread(word,1 ,numbytes , fp) != numbytes) 
+			exit(0) ;
+		BN_bin2bn(word, numbytes, bn_num) ;
+		BN_set_bit(bn_num, 0) ;
+		BN_set_bit(bn_num, numbits-1) ;
+		for (long long unsigned i = numbits ; i < numbytes*8 ; ++i)
+			BN_clear_bit(bn_num, i) ;
+
+		free(word) ;
+
+		return bn_num ;
+	}
+
+
+	void rndsearch(long long unsigned numbits, long long unsigned maxitr, FILE *pfp, FILE *rfp){
+
+		BIGNUM *bn_num = NULL ;
+
+		bn_num = BN_new() ;
+
+		if (bn_num == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return ;
+		}
+		fseek(pfp, 0, SEEK_SET) ;
+		fseek(rfp, 0, SEEK_SET) ;
+
+//		for(long long unsigned i = 1 ; i <= maxitr ; ++i){
+		long long unsigned i = 0 ;
+		while(1){
+			++i ;
+			printf("RANDOM-SEARCH: iteration %llu\n", i) ;
+			BN_zero(bn_num) ;
+			bn_num = RndOddNum(numbits, bn_num, rfp) ;
+			printf("  n = %s\n  ", BN_bn2dec(bn_num)) ;
+			if ( trialDiv(BN_bn2dec(bn_num), pfp) == 0 )
+				continue ;
+			if ( millerRabin(BN_bn2dec(bn_num), maxitr, pfp, 0 ) == 1 )
+				return ;
+
+		}
+
+	}

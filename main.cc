@@ -287,28 +287,41 @@ int main(int argc, char **argv){
 	// Command line parsing done, now call respective methods
 
 	if (choice == 1){
-//		printf("Maxval: %llu\n", maxval) ;
+		//		printf("Maxval: %llu\n", maxval) ;
 		generatePrimes(maxval) ;
-		
+
 	}
 	else if (choice == 2){
+		// Check the prime file
+		if (checkPrimesFile(inpF) == -1){}
+		else{
 		trialDiv(number, inpF) ;
+		}
 
 		fclose(inpF) ;
 
 	}
 	else if (choice == 3){
-		printf("number: %s, maxitr: %llu\n", number, maxitr) ;
+		// Check the prime file
+		if (checkPrimesFile(inpF) == -1);
+		else
+		millerRabin(number, maxitr, inpF, 1) ;
 
 		fclose(inpF) ;
 	}
 	else if (choice == 4){
-		printf("numbits: %llu, maxitr: %llu", numbits, maxitr) ;
+		// Check the prime file
+		if (checkPrimesFile(inpF) == -1);
+		else
+		rndsearch(numbits, maxitr, inpF, rndFile) ;
 
 		fclose(inpF) ;
 		fclose(rndFile) ;
 	}
 	else if (choice == 5){
+		// Check the prime file
+		if (checkPrimesFile(inpF) == -1);
+		else
 		printf("numbits: %llu\n", numbits) ;
 
 		fclose(inpF) ;

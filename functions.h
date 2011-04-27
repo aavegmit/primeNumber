@@ -10,4 +10,7 @@ void writeBit(unsigned char *, int, unsigned char) ;
 unsigned char *eratosthenes(long long unsigned int maxval, unsigned char *bitvector) ;
 void generatePrimes(long long unsigned int maxva) ;
 int checkPrimesFile(FILE *fp) ;
-void trialDiv(char *, FILE *) ;
+int trialDiv(char *, FILE *) ;
+int millerRabin(char *, long long unsigned, FILE *, int ) ;
+BIGNUM *RndOddNum(long long unsigned numbits, BIGNUM *num, FILE *) ;
+void rndsearch(long long unsigned, long long unsigned, FILE *, FILE *) ;
