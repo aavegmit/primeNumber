@@ -265,7 +265,7 @@ int main(int argc, char **argv){
 							usage() ;
 						rndFile = fopen(poly2, "r") ;
 						if (rndFile == NULL){
-							fprintf(stderr, "Primesfile could not be opened\n") ;
+							fprintf(stderr, "rndfile could not be opened\n") ;
 							exit(0) ;
 						}	       
 					} 
@@ -321,8 +321,18 @@ int main(int argc, char **argv){
 	else if (choice == 5){
 		// Check the prime file
 		if (checkPrimesFile(inpF) == -1);
-		else
-		printf("numbits: %llu\n", numbits) ;
+		else{
+			fseek(inpF, 0, SEEK_SET) ;
+			BIGNUM *bn_num = NULL ;
+			bn_num = BN_new() ;
+			if(bn_num == NULL){
+				fprintf(stderr, "BIGNUM new failed\n") ;
+				exit(0) ;
+			}
+			bn_num = maurer(numbits, inpF, rndFile, 0) ;
+			printf("\nMaurer's Algorithm found an %d-bit prime:\n  n = %s\n", BN_num_bits(bn_num), BN_bn2dec(bn_num)) ;
+		}
+
 
 		fclose(inpF) ;
 		fclose(rndFile) ;

@@ -42,6 +42,10 @@ void writeBit(unsigned char *str, int location, unsigned char value){
 void generatePrimes(long long unsigned int maxval){
 	maxval = htonl(maxval) ;
 	// Create a bitvector of length maxva/8 bytes long
+	if(maxval > pow(2, 24) || maxval < 2){
+		fprintf(stderr, "Maxval out of range\n") ;
+		exit(0) ;
+	}
 	unsigned char *bitvector = (unsigned char *)malloc(maxval/8  + 2) ;
 	memset(bitvector, 0, maxval/8 + 1) ;
 
@@ -126,6 +130,8 @@ int checkPrimesFile(FILE *fp){
 
 int trialDiv(char *num, FILE *fp){
 
+	fseek(fp, 0, SEEK_SET) ;
+
 	// Create the bignum object
 	BIGNUM *bn_num = NULL ;
 	BIGNUM *bn_word = NULL ;
@@ -160,7 +166,7 @@ int trialDiv(char *num, FILE *fp){
 	BN_CTX_init(bn_ctx) ;
 
 	if(BN_dec2bn(&bn_num,  num) == 0){
-		fprintf(stderr, "BIGNUM conversion of binary to bn\n") ;
+		fprintf(stderr, "Invalid number\n") ;
 		BN_free(bn_num) ;
 		BN_free(bn_word) ;
 		BN_free(bn_rem) ;
@@ -294,7 +300,7 @@ int millerRabin(char *num, long long unsigned maxitr, FILE *fp, int flag){
 	BN_zero(bn_two) ;
 
 	if(BN_dec2bn(&bn_num,  num) == 0){
-		fprintf(stderr, "BIGNUM conversion of binary to bn\n") ;
+		fprintf(stderr, "Invalid nuber\n") ;
 		BN_free(bn_num) ;
 		BN_free(bn_word) ;
 		BN_free(bn_rem) ;
@@ -408,6 +414,14 @@ int millerRabin(char *num, long long unsigned maxitr, FILE *fp, int flag){
 		return bn_num ;
 	}
 
+	unsigned char RndByte(FILE *fp){
+
+		unsigned char c ;	
+		if (fread(&c,1 ,1 , fp) != 1) 
+			exit(0) ;
+		return c ;
+	}
+
 
 	void rndsearch(long long unsigned numbits, long long unsigned maxitr, FILE *pfp, FILE *rfp){
 
@@ -422,7 +436,7 @@ int millerRabin(char *num, long long unsigned maxitr, FILE *fp, int flag){
 		fseek(pfp, 0, SEEK_SET) ;
 		fseek(rfp, 0, SEEK_SET) ;
 
-//		for(long long unsigned i = 1 ; i <= maxitr ; ++i){
+		//		for(long long unsigned i = 1 ; i <= maxitr ; ++i){
 		long long unsigned i = 0 ;
 		while(1){
 			++i ;
@@ -434,6 +448,163 @@ int millerRabin(char *num, long long unsigned maxitr, FILE *fp, int flag){
 				continue ;
 			if ( millerRabin(BN_bn2dec(bn_num), maxitr, pfp, 0 ) == 1 )
 				return ;
+
+		}
+
+	}
+
+
+
+	BIGNUM *maurer(long long unsigned numbits, FILE *pfp, FILE *rfp, int level){
+		BIGNUM *bn_num = NULL ;
+		BIGNUM *bn_q = NULL ;
+		BIGNUM *bn_temp = NULL ;
+		BIGNUM *bn_rem = NULL ;
+		BIGNUM *bn_I = NULL ;
+		BIGNUM *bn_r = NULL ;
+		BIGNUM *bn_a = NULL ;
+		BIGNUM *bn_b = NULL ;
+		BIGNUM *bn_d = NULL ;
+		BIGNUM *bn_nminus1 = NULL ;
+		BIGNUM *bn_kminus2 = NULL ;
+		BN_CTX *bn_ctx = NULL ;
+
+		bn_num = BN_new() ;
+		bn_q = BN_new() ;
+		bn_I = BN_new() ;
+		bn_rem = BN_new() ;
+		bn_temp = BN_new() ;
+		bn_r = BN_new() ;
+		bn_nminus1 = BN_new() ;
+		bn_kminus2 = BN_new() ;
+		bn_a = BN_new() ;
+		bn_b = BN_new() ;
+		bn_d = BN_new() ;
+		bn_ctx = BN_CTX_new() ;
+
+		if (bn_num == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return NULL;
+		}
+		if (bn_q == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return NULL;
+		}
+		if (bn_nminus1 == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return NULL;
+		}
+		if (bn_kminus2 == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return NULL;
+		}
+		if (bn_a == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return NULL;
+		}
+		if (bn_ctx == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return NULL;
+		}
+		if (bn_r == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return NULL;
+		}
+		if (bn_b == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return NULL;
+		}
+		if (bn_d == NULL){
+			fprintf(stderr, "BIGNUM new failed\n") ;
+			return NULL;
+		}
+		BN_CTX_init(bn_ctx) ;
+
+		printf("Maurer: level %d, k=%llu\n", level, numbits) ;
+
+		while (numbits <= 20){
+			BN_zero(bn_num) ;
+			bn_num = RndOddNum(numbits, bn_num, rfp) ;
+			printf("  step 1.1, n = %s\n    ", BN_bn2dec(bn_num)) ;
+			if ( trialDiv(BN_bn2dec(bn_num), pfp) != 0 )
+				return bn_num ;
+
+		}
+
+		double r = 0.0 ;
+		unsigned char rnd ;
+		unsigned int m = 20 ;
+		printf("  step 4") ;
+		if ( numbits <= 2*m)
+			r = 0.5 ;
+		while( numbits > 2*m){
+			rnd = RndByte(rfp) ;
+			r = rnd / 255.0 ;
+			r = 0.5 + r / 2.0 ;
+			if (numbits*(1 - r) > m){
+				printf(": random byte = %u", rnd) ;
+				break ;
+			}
+		}
+		printf(", r = %d%c\n", round(r*100), 0x25) ;
+		bn_q = maurer(floor(r*numbits) + 1, pfp, rfp , level + 1 ) ;
+		printf("Maurer: back to level %d, k=%llu, q=%s\n", level, numbits, BN_bn2dec(bn_q)) ;
+		long long unsigned int q_num_bits = BN_num_bits(bn_q) ;
+		int n_num_bits ;
+		// Divide here
+//		BN_set_word(bn_temp, pow(2, numbits-2)) ;
+		BN_set_word(bn_temp, 2) ;
+		BN_set_word(bn_kminus2, numbits - 2) ;
+		BN_exp(bn_temp, bn_temp, bn_kminus2, bn_ctx) ;
+
+
+		BN_div(bn_I, bn_rem, bn_temp, bn_q, bn_ctx) ;
+//		printf("I : %s\n\n", BN_bn2dec(bn_I)) ;
+		int step7ctr = 0 ;
+		// Step 7
+		while(1){
+			// Step 7.1
+			bn_r = RndOddNum(numbits + 1 - q_num_bits, bn_r, rfp) ;
+//			BN_mod_add(bn_r, bn_I, bn_r, bn_I, bn_ctx) ;
+			BN_mod(bn_r,  bn_r, bn_I, bn_ctx) ;
+			BN_add(bn_r, bn_r, bn_I) ;
+			BN_add_word(bn_r, 1) ;
+			// Compute bn_num
+			BN_mul(bn_num, bn_r, bn_q, bn_ctx) ;
+			BN_mul_word(bn_num, 2) ;
+			BN_add_word(bn_num, 1) ;
+			++step7ctr ;
+			printf("  step 7, itr %d: R = %s, n = %s\n    ", step7ctr, BN_bn2dec(bn_r), BN_bn2dec(bn_num)) ;
+			BN_mul_word(bn_r, 2) ;
+
+			// Step 7.2
+			if ( trialDiv(BN_bn2dec(bn_num), pfp) != 0 ){
+				n_num_bits = BN_num_bits(bn_num) ;
+				bn_a = RndOddNum(n_num_bits, bn_a, rfp) ;
+				BN_set_word(bn_temp, 1) ;
+				// Step 7.2.1
+				BN_copy(bn_nminus1, bn_num) ;
+				BN_sub_word(bn_nminus1, 1) ;
+				while(BN_cmp(bn_a, bn_temp) <= 0 || BN_cmp(bn_a, bn_nminus1) >=0){
+					bn_a = RndOddNum(n_num_bits, bn_a, rfp) ;
+				}
+				printf("  step 7.2.1, itr %d: a = %s\n", step7ctr,  BN_bn2dec(bn_a)) ;
+
+				// Step 7.2.2
+				BN_mod_exp(bn_b, bn_a, bn_nminus1, bn_num, bn_ctx) ;
+				BN_set_word(bn_temp, 1) ;
+				if(BN_cmp(bn_b, bn_temp) == 0){
+					BN_mod_exp(bn_b,  bn_a, bn_r, bn_num, bn_ctx ) ;
+					BN_sub_word(bn_b, 1) ;
+					BN_gcd(bn_d, bn_b, bn_num, bn_ctx) ;
+					if (BN_cmp(bn_d, bn_temp) == 0)
+						return bn_num ;
+				}
+
+
+			}
+
+
 
 		}
 

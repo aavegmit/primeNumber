@@ -1,0 +1,24 @@
+Aaveg Mittal
+aavegmit@usc.edu
+Homework7
+
+. Design
+. There are total 3 files 2 source file and 1 header file.
+
+main.cc: 
+. mainly contains the general code, such as userinput parsing & then calling the appropriote function. 
+
+functions.cc:
+. Contains all the implementations of the algorithms requred for this algorithm
+	Mthod readBit and writeBit are taken for earlier DES assignment
+
+	BIGNUM library is extensively used in this project
+
+functions.h
+. Contains the prototype declarations of all the functions defined in functions.cc
+it also contains the round macro, given to us in the homework specification page
+
+
+2.      Testing
+1. Please follow the instruction mentioned on homework 6 page.
+
